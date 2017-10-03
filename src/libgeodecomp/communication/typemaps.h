@@ -5,57 +5,9 @@
 
 #include <mpi.h>
 #include <complex>
-#include <libgeodecomp/geometry/coord.h>
-#include <libgeodecomp/geometry/coord.h>
-#include <libgeodecomp/geometry/coord.h>
-#include <libgeodecomp/geometry/coordbox.h>
-#include <libgeodecomp/geometry/coordbox.h>
-#include <libgeodecomp/geometry/coordbox.h>
-#include <libgeodecomp/geometry/coordbox.h>
-#include <libgeodecomp/storage/fixedarray.h>
-#include <libgeodecomp/storage/fixedarray.h>
-#include <libgeodecomp/storage/fixedarray.h>
-#include <libgeodecomp/geometry/floatcoord.h>
-#include <libgeodecomp/geometry/floatcoord.h>
-#include <libgeodecomp/geometry/floatcoord.h>
-#include <libgeodecomp/geometry/floatcoord.h>
-#include <libgeodecomp/geometry/streak.h>
-#include <libgeodecomp/geometry/streak.h>
-#include <libgeodecomp/geometry/streak.h>
-#include <libgeodecomp/geometry/streak.h>
-#include <libgeodecomp/misc/testcell.h>
-#include <libgeodecomp/misc/testcell.h>
-#include <libgeodecomp/misc/testcell.h>
-#include <libgeodecomp/misc/testcell.h>
-#include <libgeodecomp/misc/unstructuredtestcell.h>
-#include <libgeodecomp/misc/unstructuredtestcell.h>
-#include <libgeodecomp/misc/chronometer.h>
 
-extern MPI_Datatype MPI_LIBGEODECOMP_COORD_1_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORD_2_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORD_3_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORDBOX_1_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORDBOX_2_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORDBOX_3_;
-extern MPI_Datatype MPI_LIBGEODECOMP_COORDBOXMPIDATATYPEHELPER;
-extern MPI_Datatype MPI_LIBGEODECOMP_FIXEDARRAY_DOUBLE_100_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FIXEDARRAY_DOUBLE_CHRONOMETER_NUM_INTERVALS_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FIXEDARRAY_INT_100_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FLOATCOORD_1_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FLOATCOORD_2_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FLOATCOORD_3_;
-extern MPI_Datatype MPI_LIBGEODECOMP_FLOATCOORDMPIDATATYPEHELPER;
-extern MPI_Datatype MPI_LIBGEODECOMP_STREAK_1_;
-extern MPI_Datatype MPI_LIBGEODECOMP_STREAK_2_;
-extern MPI_Datatype MPI_LIBGEODECOMP_STREAK_3_;
-extern MPI_Datatype MPI_LIBGEODECOMP_STREAKMPIDATATYPEHELPER;
-extern MPI_Datatype MPI_LIBGEODECOMP_TESTCELL_1_;
-extern MPI_Datatype MPI_LIBGEODECOMP_TESTCELL_2_;
-extern MPI_Datatype MPI_LIBGEODECOMP_TESTCELL_3_;
-extern MPI_Datatype MPI_LIBGEODECOMP_TESTCELLMPIDATATYPEHELPER;
-extern MPI_Datatype MPI_LIBGEODECOMP_UNSTRUCTUREDTESTCELL_UNSTRUCTUREDTESTCELLHELPERS_EMPTYAPI_;
-extern MPI_Datatype MPI_LIBGEODECOMP_UNSTRUCTUREDTESTCELLMPIDATATYPEHELPER;
-extern MPI_Datatype MPI_LIBGEODECOMP_CHRONOMETER;
+
+
 
 namespace LibGeoDecomp {
 /**
@@ -112,31 +64,7 @@ private:
 
     static bool mapsCreated;
 
-    static MPI_Datatype generateMapLibGeoDecomp_Coord_1_();
-    static MPI_Datatype generateMapLibGeoDecomp_Coord_2_();
-    static MPI_Datatype generateMapLibGeoDecomp_Coord_3_();
-    static MPI_Datatype generateMapLibGeoDecomp_CoordBox_1_();
-    static MPI_Datatype generateMapLibGeoDecomp_CoordBox_2_();
-    static MPI_Datatype generateMapLibGeoDecomp_CoordBox_3_();
-    static MPI_Datatype generateMapLibGeoDecomp_CoordBoxMPIDatatypeHelper();
-    static MPI_Datatype generateMapLibGeoDecomp_FixedArray_double_100_();
-    static MPI_Datatype generateMapLibGeoDecomp_FixedArray_double_Chronometer_NUM_INTERVALS_();
-    static MPI_Datatype generateMapLibGeoDecomp_FixedArray_int_100_();
-    static MPI_Datatype generateMapLibGeoDecomp_FloatCoord_1_();
-    static MPI_Datatype generateMapLibGeoDecomp_FloatCoord_2_();
-    static MPI_Datatype generateMapLibGeoDecomp_FloatCoord_3_();
-    static MPI_Datatype generateMapLibGeoDecomp_FloatCoordMPIDatatypeHelper();
-    static MPI_Datatype generateMapLibGeoDecomp_Streak_1_();
-    static MPI_Datatype generateMapLibGeoDecomp_Streak_2_();
-    static MPI_Datatype generateMapLibGeoDecomp_Streak_3_();
-    static MPI_Datatype generateMapLibGeoDecomp_StreakMPIDatatypeHelper();
-    static MPI_Datatype generateMapLibGeoDecomp_TestCell_1_();
-    static MPI_Datatype generateMapLibGeoDecomp_TestCell_2_();
-    static MPI_Datatype generateMapLibGeoDecomp_TestCell_3_();
-    static MPI_Datatype generateMapLibGeoDecomp_TestCellMPIDatatypeHelper();
-    static MPI_Datatype generateMapLibGeoDecomp_UnstructuredTestCell_UnstructuredTestCellHelpers_EmptyAPI_();
-    static MPI_Datatype generateMapLibGeoDecomp_UnstructuredTestCellMPIDatatypeHelper();
-    static MPI_Datatype generateMapLibGeoDecomp_Chronometer();
+
 
 public:
     static inline MPI_Datatype lookup(bool*)
@@ -227,131 +155,6 @@ public:
     static inline MPI_Datatype lookup(wchar_t*)
     {
         return MPI_WCHAR;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Coord<1 >*)
-    {
-        return MPI_LIBGEODECOMP_COORD_1_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Coord<2 >*)
-    {
-        return MPI_LIBGEODECOMP_COORD_2_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Coord<3 >*)
-    {
-        return MPI_LIBGEODECOMP_COORD_3_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::CoordBox<1 >*)
-    {
-        return MPI_LIBGEODECOMP_COORDBOX_1_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::CoordBox<2 >*)
-    {
-        return MPI_LIBGEODECOMP_COORDBOX_2_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::CoordBox<3 >*)
-    {
-        return MPI_LIBGEODECOMP_COORDBOX_3_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::CoordBoxMPIDatatypeHelper*)
-    {
-        return MPI_LIBGEODECOMP_COORDBOXMPIDATATYPEHELPER;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FixedArray<double,100 >*)
-    {
-        return MPI_LIBGEODECOMP_FIXEDARRAY_DOUBLE_100_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FixedArray<double,Chronometer::NUM_INTERVALS >*)
-    {
-        return MPI_LIBGEODECOMP_FIXEDARRAY_DOUBLE_CHRONOMETER_NUM_INTERVALS_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FixedArray<int,100 >*)
-    {
-        return MPI_LIBGEODECOMP_FIXEDARRAY_INT_100_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FloatCoord<1 >*)
-    {
-        return MPI_LIBGEODECOMP_FLOATCOORD_1_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FloatCoord<2 >*)
-    {
-        return MPI_LIBGEODECOMP_FLOATCOORD_2_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FloatCoord<3 >*)
-    {
-        return MPI_LIBGEODECOMP_FLOATCOORD_3_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::FloatCoordMPIDatatypeHelper*)
-    {
-        return MPI_LIBGEODECOMP_FLOATCOORDMPIDATATYPEHELPER;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Streak<1 >*)
-    {
-        return MPI_LIBGEODECOMP_STREAK_1_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Streak<2 >*)
-    {
-        return MPI_LIBGEODECOMP_STREAK_2_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Streak<3 >*)
-    {
-        return MPI_LIBGEODECOMP_STREAK_3_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::StreakMPIDatatypeHelper*)
-    {
-        return MPI_LIBGEODECOMP_STREAKMPIDATATYPEHELPER;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::TestCell<1 >*)
-    {
-        return MPI_LIBGEODECOMP_TESTCELL_1_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::TestCell<2 >*)
-    {
-        return MPI_LIBGEODECOMP_TESTCELL_2_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::TestCell<3 >*)
-    {
-        return MPI_LIBGEODECOMP_TESTCELL_3_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::TestCellMPIDatatypeHelper*)
-    {
-        return MPI_LIBGEODECOMP_TESTCELLMPIDATATYPEHELPER;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::UnstructuredTestCell<UnstructuredTestCellHelpers::EmptyAPI >*)
-    {
-        return MPI_LIBGEODECOMP_UNSTRUCTUREDTESTCELL_UNSTRUCTUREDTESTCELLHELPERS_EMPTYAPI_;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::UnstructuredTestCellMPIDatatypeHelper*)
-    {
-        return MPI_LIBGEODECOMP_UNSTRUCTUREDTESTCELLMPIDATATYPEHELPER;
-    }
-
-    static inline MPI_Datatype lookup(LibGeoDecomp::Chronometer*)
-    {
-        return MPI_LIBGEODECOMP_CHRONOMETER;
     }
 
 };
