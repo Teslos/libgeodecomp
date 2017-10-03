@@ -1,3 +1,5 @@
+#include <hpx/hpx_init.hpp>
+
 #include <iostream>
 #include <libgeodecomp/geometry/partitions/unstructuredstripingpartition.h>
 #include <libgeodecomp/geometry/floatcoord.h>
@@ -9,8 +11,6 @@
 #include <libflatarray/short_vec.hpp>
 #include <libflatarray/testbed/cpu_benchmark.hpp>
 #include <libflatarray/testbed/evaluate.hpp>
-
-#include <hpx/hpx_init.hpp>
 
 #include "../performancetests/cpubenchmark.h"
 
@@ -182,8 +182,6 @@ LIBFLATARRAY_REGISTER_SOA(
 LIBGEODECOMP_REGISTER_HPX_COMM_TYPE(UnstructuredBusyworkCell)
 LIBGEODECOMP_REGISTER_HPX_COMM_TYPE(UnstructuredBusyworkCellWithUpdateLineX)
 LIBGEODECOMP_REGISTER_HPX_COMM_TYPE(UnstructuredBusyworkCellWithSoAAndUpdateLineX)
-
-
 
 /**
  * Connects cells in a structure that corresponds to a regular grid of
@@ -426,6 +424,9 @@ private:
     std::size_t messageSize;
     std::vector<int> neighbors;
 };
+
+REGISTER_CELLCOMPONENT(DataflowTestModel, MessageType, fixme)
+
 
 class DataflowTestInitializer : public Initializer<DataflowTestModel>
 {
