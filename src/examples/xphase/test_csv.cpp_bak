@@ -1,0 +1,31 @@
+// Test the CSV data read from boost 
+
+#include<iostream>
+#include<fstream>
+#include<vector>
+#include<algorithm>
+#include<iterator>
+#include<boost/tokenizer.hpp>
+
+int main() {
+	using namespace boost;
+	using namespace std;
+
+	string data("Results.csv");
+	ifstream in(data.c_str());
+
+	typedef tokenizer<escaped_list_separator<char> > Tokenizer;
+	vector<string> vec;
+	string line;
+	while(getline(in,line))
+	{
+		//cout << line << endl;
+		Tokenizer tok(line);
+		vec.assign(tok.begin(),tok.end());
+		// vector now contains strings from one row, output to cout here
+		//copy(vec.begin(),vec.end(), ostream_iterator<string>(cout, "|"));
+		//cout << "\n----------------------------------" << endl;
+		cout << "vector of coor:" << vec[0] << " " << vec[5] << ',' << vec[6]<< ',' << vec[8] << endl;
+	}
+}
+
