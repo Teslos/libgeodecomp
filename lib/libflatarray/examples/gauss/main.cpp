@@ -5,9 +5,7 @@
  * file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#ifdef _MSC_BUILD
 #  define _USE_MATH_DEFINES
-#endif
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -15,7 +13,9 @@
 #include <libflatarray/flat_array.hpp>
 #include <libflatarray/testbed/cpu_benchmark.hpp>
 #include <libflatarray/testbed/evaluate.hpp>
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 extern "C" {
     void filter_c99(double *data_new, const double *data_old, int dim_x, int dim_y, int dim_z);
 }

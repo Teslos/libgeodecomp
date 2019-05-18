@@ -1,5 +1,10 @@
 auto.cmake
+Win32/
 build/
+build_cygwin/
+build_intel/
+build_win/
+build_linux/
 doc/xml/
 doc/html/
 
@@ -42,6 +47,11 @@ src/libgeodecomp/parallelization/test/unit/main.cpp
 src/libgeodecomp/storage/test/parallel_mpi_2/main.cpp
 src/libgeodecomp/storage/test/parallel_openmp_4/main.cpp
 src/libgeodecomp/storage/test/unit/main.cpp
+src/libgeodecomp/geometry/test/unit/convexpolytopetest.cpp.tmp
+src/libgeodecomp/io/test/unit/clonableinitializerwrappertest.cpp.tmp
+src/libgeodecomp/loadbalancer/test/unit/biasbalancertest.cpp.tmp
+src/libgeodecomp/misc/test/unit/apitraitstest.cpp.tmp
+src/libgeodecomp/storage/test/unit/boxcelltest.cpp.tmp
 
 src/**/test/**/*test.cpp
 src/**/test/**/*test.cu

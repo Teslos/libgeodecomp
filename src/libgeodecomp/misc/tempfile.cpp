@@ -47,7 +47,7 @@ std::string TempFile::serial(const std::string& prefix)
         buf << filename;
         name += buf.str();
 #ifdef _WIN32
-        int access_result = _access(name.c_str(), 0);
+        int access_result = access(name.c_str(), F_OK);
 #else
         int access_result = access(name.c_str(), F_OK);
 #endif

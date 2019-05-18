@@ -24,6 +24,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <WinSock2.h>
+#include <time.h>
 #else
 #include <unistd.h>
 #endif
@@ -88,7 +89,8 @@ public:
 
         tm timeSpec;
 #ifdef _WIN32
-        gmtime_s(&timeSpec, &secondsSinceEpoch);
+//        gmtime_s(&timeSpec, &secondsSinceEpoch);
+        gmtime_r(&secondsSinceEpoch, &timeSpec);
 #else
         gmtime_r(&secondsSinceEpoch, &timeSpec);
 #endif

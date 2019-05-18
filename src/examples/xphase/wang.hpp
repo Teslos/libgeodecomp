@@ -1,3 +1,4 @@
+#include<vector>
 const double A      = 16.0;
 const double B      =  1.0;
 const double D      =  0.1;
@@ -8,6 +9,7 @@ const double mr     = 500.0;
 const double mt     = 1.0;
 const double kappa  = 100.0;
 const double rho_o  = 0.9816;
+const double gc     = 0.05; 
 
 
 // model allen cahn
@@ -16,16 +18,18 @@ class Cell
 {
 public:
         friend void runSimulation();
+        friend class RigidMotions;
 #ifdef PMPI
         static MPI_Datatype MPIDataType;
 #endif
-        
+    static vector<double> staticData;        
     class API :
         public APITraits::HasFixedCoordsOnlyUpdate,
         public APITraits::HasStencil<Stencils::VonNeumann<3, 1> >,
         public APITraits::HasTorusTopology<3>,
         public APITraits::HasCustomMPIDataType<Cell>,
-        public APITraits::HasNanoSteps<2>
+        public APITraits::HasNanoSteps<2>,
+        public APITraits::HasStaticData<vector<double>>
     {};
 
     inline explicit Cell() {}
@@ -37,10 +41,19 @@ public:
         {
             eta[i] = v[i];  // vector of crystalline orientations
             //rho += eta[i];
-			rho = 1.0; // initialize mass density to one ( ivt )
+		    rho = 1.0; // initialize mass density to one ( ivt )
         }
+		// initialize forces to zero
+		memset(f, 0, sizeof(f[0][0][0]) *nf*nf*3 );
     }
     
+	template<typename MAP>
+	inline __host__ __device__
+	double grainb(const MAP& hood, int i, int j)
+	{
+		return hood[FixedCoord< 0, 0, 0 >()].eta[i] * hood[FixedCoord< 0, 0, 0 >()].eta[j];
+	}
+
     template<typename MAP>
     inline __host__ __device__
     double old_eta(const MAP& hood, int i)
@@ -79,17 +92,38 @@ public:
          - 6 * hood[FixedCoord< 0,  0,  0>()].eta[i];
     }
 
-	/**
-	 * Defines nabla operator for eta- multicomponent order parameter
+    /**
+ 	 * Defines nabla operator for eta- multicomponent order parameter
 	 * that is zero in liquid and has value {0,1,0,....,0} for complete solid rho=1.
 	 */
 	template<typename MAP>
 	inline __host__ __device__
-	double nabla_eta(const MAP& hood, int i) 
+	double* nabla_eta(const MAP& hood, int i) 
 	{
-			
+       static double v[3];
+       v[0] =  hood[FixedCoord< 1, 0, 0>()].eta[i] - hood[FixedCoord< -1, 0, 0 >()].eta[i];      
+       v[1] =  hood[FixedCoord< 0, 1, 0>()].eta[i] - hood[FixedCoord< 0, -1 ,0 >()].eta[i];
+       v[2] =  hood[FixedCoord< 0, 0, 1>()].eta[i] - hood[FixedCoord< 0, 0, -1 >()].eta[i];
+	   return v;
 	}	
-    
+    /**
+     * Defines nabla operator for velocity of the particle i
+     * \partial_x v_x 
+     * \partial_y v_y
+     * \partial_z v_z
+     * @WARNING is this correct maybe should divide by 2 because deltax is unit. 
+     */
+    template<typename MAP>
+    inline __host__ __device__
+    double* nabla_vel(const MAP& hood, int i)
+    {
+        static double gradv[3];
+        gradv[0] = hood[FixedCoord< 1, 0, 0 >()].vel[i][0] - hood[FixedCoord< -1, 0, 0 >()].vel[i][0];
+        gradv[1] = hood[FixedCoord< 0, 1, 0 >()].vel[i][1] - hood[FixedCoord< 0, -1, 0 >()].vel[i][1];
+        gradv[2] = hood[FixedCoord< 0, 0, 1 >()].vel[i][2] - hood[FixedCoord< 0, 0, -1 >()].vel[i][2];
+        return gradv;
+    }    
+
     template<typename MAP>
     inline __host__ __device__
     double lap_psi(const MAP& hood)
@@ -132,6 +166,9 @@ public:
         {
             phi   = 0.0;
             eta3  = 0.0;
+
+            // set the forces to zero
+            memset(f, 0, sizeof(double)*nf*nf*3);
             // update the particles 
             for(int i = 0; i < nf; ++i)
             {
@@ -150,6 +187,10 @@ public:
                 double oe = old_eta<MAP>(hood, i);
                 
                 chi[i]  = - k_eta * lap_eta<MAP>(hood, i) 
+                    // adding advection term to model rigid motion
+                    // of the particles -- ivt 15.05.19
+                          //+(nabla_eta(hood,i)[0] * vel[i][0] + nabla_eta(hood,i)[1] * vel[i][1] 
+                          //        + nabla_eta(hood,i)[2] * vel[i][2] + oe * nabla_vel(hood,i)[0] + oe * nabla_vel(hood,i)[1] + oe * nabla_vel(hood,i)[2])
                           + 12.0 * B * (1 - orho) * oe
                           - 12.0 * B * (2 - orho) * oe * oe
                           + 12.0 * B * oe * phi;
@@ -163,13 +204,54 @@ public:
 		  		  + 2.0 * B * orho
                   - 6.0 * B * phi
                   + 4.0 * B * eta3;
-                  
+
+			// here calculate the forces coefficients to account
+			// for rigid motion of the particles
+			for (int i = 0; i < nf; ++i) 
+			{
+			   for (int j = i+1; j < nf; ++j) 
+               {
+                   double gij = grainb<MAP>(hood,i,j);    
+                   if( gij > gc ) 
+                   {
+                       // @ factor 0.5 comes from the central differences for gradient operator
+                       // added template <MAP> designator--ivt 15.05.19
+                       f[i][j][0] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[0] - nabla_eta(hood,j)[0]); 
+                       f[i][j][1] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[1] - nabla_eta(hood,j)[1]); 
+                       f[i][j][2] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[2] - nabla_eta(hood,j)[2]); 
+		       		   //cout << "Forces on (" << i <<","<<j<<"):"<<"("<<f[i][j][0] << ","<<f[i][j][1]<<","<<f[i][j][2]<<")"<<endl;
+                       f[j][i][0]=-f[i][j][0];
+                       f[j][i][1]=-f[i][j][1];
+                       f[j][i][2]=-f[i][j][2];
+                   }    
+               }
+            }
+
+            memset(sumf, 0, sizeof(sumf[0][0])*nf*3);
+            // forces on the particle i
+            for(int i = 0; i < nf; ++i)
+            {
+                for(int j=0; j < nf; ++j)
+                {
+                    if(i != j) 
+                    {
+                        sumf[i][0] += f[i][j][0];
+                        sumf[i][1] += f[i][j][1];
+                        sumf[i][2] += f[i][j][2];
+                    }
+                }
+                //cout << "Sumf "<<i<<" (x,y,z):" << sumf[i][0] << "," << sumf[i][1] << "," << sumf[i][2] << endl; 
+                vel[i][0] = mt * sumf[i][0] / staticData[i] * eta[i];
+                vel[i][1] = mt * sumf[i][1] / staticData[i] * eta[i];
+                vel[i][2] = mt * sumf[i][2] / staticData[i] * eta[i];
+            }
 
         }
         else if(nanoStep == 1)
         {
             //phi = hood[FixedCoord< 0, 0, 0>()].phi;
-            
+
+                        
             phi   = 0.0;
             
             for(int i = 0; i < nf; ++i)
@@ -190,7 +272,9 @@ public:
     {
         update(hood, nanoStep);
     }
-    
+    double f[nf][nf][3]; 
+    double sumf[nf][3]; 
+    double vel[nf][3];
     double rho, psi, phi, eta[nf], chi[nf], vr[nf], vt[nf], eta3;
 };
 

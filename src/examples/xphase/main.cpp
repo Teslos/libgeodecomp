@@ -28,18 +28,20 @@
 using namespace std;
 using namespace LibGeoDecomp;
 
+class RigidMotions;
 // constants
 
-const int nf = 25;
-const int nx = 480;
-const int ny = 480;
+const int nf = 12;
+//const int nx = 1152/2;
+//const int ny = 1152/2;
+const int nx = 256;
+const int ny = 256;
 const int nz = 1;
 
 int outputFrequency = 1000;
 int numSteps = 100000;
 
 const double dt = 0.001;
-
 // model
 
 //#include "allen_cahn.hpp"
@@ -47,7 +49,7 @@ const double dt = 0.001;
 #include "wang.hpp"
 
 // init
-
+vector<double> Cell::staticData = {0};
 class CellInitializer : public SimpleInitializer<Cell>
 {
 public:
@@ -58,22 +60,27 @@ public:
 	{
 		using namespace boost;
 		using namespace std;
-
-		string data("Results.csv");
+		cout << "Reading particles" << endl;
+		string data("26particles.txt");
 		ifstream in(data.c_str());
+		if (!in) {
+			cerr << "Can't open the input file " << data << endl;
+			exit(1);
+		}
+
 
 		typedef tokenizer<escaped_list_separator<char> > Tokenizer;
-			string line;
-			vector<string> vec;
-			int l = 0;
+		string line;
+		vector<string> vec;
+		int l = 0;
 		while(getline(in,line))
 		{
 			Tokenizer tok(line);
 			vec.assign(tok.begin(),tok.end());
 			//vector <double> v = {atof(vec[5].c_str()),atof(vec[6].c_str()),atof(vec[8].c_str())};
-			particles[l][0] = atof(vec[5].c_str());
-			particles[l][1] = atof(vec[6].c_str());
-			particles[l][2] = atof(vec[8].c_str());
+			particles[l][0] = atof(vec[0].c_str());
+			particles[l][1] = atof(vec[1].c_str());
+			particles[l][2] = atof(vec[2].c_str());
 			cout << "vector of coor:" << particles[l][0] << " " << particles[l][1] << ',' << particles[l][2]<<  endl;
 			l++;
 		}
@@ -82,16 +89,16 @@ public:
 		   	
     virtual void grid(GridBase<Cell, 3> *ret)
     {
-		vector< vector<double> > particles(30, vector<double>(3, 0.0));	
+	vector< vector<double> > particles(30, vector<double>(3, 0.0));	
         boost::mt19937 rng;
         boost::normal_distribution<> nd(0.0, 0.5);
         boost::variate_generator<boost::mt19937&, 
                            boost::normal_distribution<> > var_nor(rng, nd);
         
         CoordBox<3> rect = ret->boundingBox();
-		// read particles from external file
+	// read particles from external file
         readparticles(particles);
-	    double size_img = 515.0;	
+        double size_img = 1152/2;	
         for (int z = 0; z < nz; ++z) 
             for (int y = 0; y < ny; ++y) 
                 for (int x = 0; x < nx; ++x) 
@@ -122,23 +129,22 @@ public:
                             else
                               v[i] = 0;
                       		*/
-							//cout << "I have a tshirt "<< i << ":" << particles[i][0] << endl;	
-							double xc = particles[i][0] / size_img;
-							double yc = particles[i][1] / size_img;
-							double rc = particles[i][2] / size_img;	
+							double xc = particles[i][0]/size_img;
+							double yc = particles[i][1]/size_img;
+							double rc = particles[i][2]/size_img;	
 							//cout << "xc: " << xc << "yc: " << yc << "rc: " << rc << endl;
 							double dx = double(x - xc*nx)/double(nx);
 							double dy = double(y - yc*ny)/double(ny);
 							double dz = double(z - nz/2)/double(nz);
-
+							dz = 0.0;
 							double r2 = dx*dx + dy*dy + dz*dz;
 							// scale radius of particles
-							double scale = 5.0/160.0;
-							rc *= scale;
-							if (r2 < rc) {
+							//double scale = 5.0/160.0;
+							//rc *= scale;
+							if (r2 < rc*rc) {
 								   //v[i] = var_nor() + 0.12;
 								   v[i] = 2.0/3.0 * M_PI ;
-                            	   ret->set(c, Cell(v));
+                            	   				   ret->set(c, Cell(v));
 							} else {	   
 								   v[i] = 0.0;
 							}	   
@@ -148,7 +154,69 @@ public:
                 }
     }
 };
+//
+// Steerer class
+// this class is used to run the rigid motion 
+// of the sintering particles.
+//
+//
+class RigidMotions : public Steerer<Cell> 
+{
+	public:
+		using Steerer<Cell>::CoordType;
+		using Steerer<Cell>::GridType;
+		using Steerer<Cell>::Topology;
+	RigidMotions(const unsigned ioPeriod): Steerer<Cell>(ioPeriod), vol(30),xc(30),yc(30) 
+	{}
+	void nextStep(
+		GridType *grid,
+		const Region<Topology::DIM>& validRegion,
+		const CoordType& globalDimensions,
+		unsigned step,
+		SteererEvent event,
+		std::size_t rank,
+		bool lastCall,
+		SteererFeedback *feedback)
+	{
+		Coord<3> dim = grid->dimensions();
+		//cout << "Dim: " << "("<< dim.x() <<","<< dim.y()<<"," << dim.z() <<")"<< endl;
+		for (int i = 0; i < nf; ++i) vol[i] = 0.0; 
+		// calculate volume of the particles
+		// and center of gravity for the particles
+		for (int z = 0; z < nz; ++z)
+           	for (int y = 0; y < ny; ++y)
+              	for (int x = 0; x < nx; ++x)
+                {
+                    Coord<3> c(x,y,z);
+                    Cell cell = grid->get(c);
+                    for(int i = 0; i < nf; ++i) {
+                        vol[i] += cell.eta[i];
+                        xc[i]  += x * cell.eta[i]; 
+                        yc[i]  += y * cell.eta[i];
+                    }	
+                }   
+		for (int i = 0; i < nf; ++i) {
+			//cout << "Volume of particle first eval." << i << ":" << vol[i] << endl;
+			xc[i] /= vol[i];
+			yc[i] /= vol[i];
+		}
 
+
+		// write the current value of volume for particles
+		for (int i = 0; i < nf; ++i) {
+			//xc[i] /= vol[i];
+			//yc[i] /= vol[i];
+			//cout << "Volume of particle " << i << ":" << vol[i] << endl;
+			//cout << "(xc,yc): " << xc[i] << "," << yc[i] << endl;
+		}
+        feedback->setStaticData(vol);
+													
+	}
+
+	private:
+	vector<double> vol;
+	vector<double> xc, yc;
+};
 // run
     
 void runSimulation()
@@ -227,6 +295,7 @@ void runSimulation()
             
 #endif
     cout << "running simulation" << endl;
+    sim.addSteerer(new RigidMotions(10));
     sim.run();
 }
 
