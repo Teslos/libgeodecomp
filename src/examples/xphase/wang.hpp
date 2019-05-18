@@ -179,33 +179,8 @@ public:
             }
             
             double orho = old_rho<MAP>(hood); // take previous time step rho
-            
-            //phi += orho * orho;
-                
-            for(int i = 0; i < nf; ++i)
-            {
-                double oe = old_eta<MAP>(hood, i);
-                
-                chi[i]  = - k_eta * lap_eta<MAP>(hood, i) 
-                    // adding advection term to model rigid motion
-                    // of the particles -- ivt 15.05.19
-                          //+(nabla_eta(hood,i)[0] * vel[i][0] + nabla_eta(hood,i)[1] * vel[i][1] 
-                          //        + nabla_eta(hood,i)[2] * vel[i][2] + oe * nabla_vel(hood,i)[0] + oe * nabla_vel(hood,i)[1] + oe * nabla_vel(hood,i)[2])
-                          + 12.0 * B * (1 - orho) * oe
-                          - 12.0 * B * (2 - orho) * oe * oe
-                          + 12.0 * B * oe * phi;
-            } 
-            // changes to original Wang paper 
-	        // -4.0 * B * eta3 is +4*B*eta3 and additional +2.0*B*orho term 
-            psi = - k_rho * lap_rho<MAP>(hood)
-                  + 2.0 * A * orho 
-                  - 6.0 * A * orho * orho
-                  + 4.0 * A * orho * orho * orho
-		  		  + 2.0 * B * orho
-                  - 6.0 * B * phi
-                  + 4.0 * B * eta3;
 
-			// here calculate the forces coefficients to account
+            // here calculate the forces coefficients to account
 			// for rigid motion of the particles
 			for (int i = 0; i < nf; ++i) 
 			{
@@ -246,6 +221,32 @@ public:
                 vel[i][2] = mt * sumf[i][2] / staticData[i] * eta[i];
             }
 
+            //phi += orho * orho;
+                
+            for(int i = 0; i < nf; ++i)
+            {
+                double oe = old_eta<MAP>(hood, i);
+                
+                chi[i]  = - k_eta * lap_eta<MAP>(hood, i) 
+                    // adding advection term to model rigid motion
+                    // of the particles -- ivt 15.05.19
+                          //+(nabla_eta(hood,i)[0] * vel[i][0] + nabla_eta(hood,i)[1] * vel[i][1] 
+                          //        + nabla_eta(hood,i)[2] * vel[i][2] + oe * nabla_vel(hood,i)[0] + oe * nabla_vel(hood,i)[1] + oe * nabla_vel(hood,i)[2])
+                          + 12.0 * B * (1 - orho) * oe
+                          - 12.0 * B * (2 - orho) * oe * oe
+                          + 12.0 * B * oe * phi;
+            } 
+            // changes to original Wang paper 
+	        // -4.0 * B * eta3 is +4*B*eta3 and additional +2.0*B*orho term 
+            psi = - k_rho * lap_rho<MAP>(hood)
+                  + 2.0 * A * orho 
+                  - 6.0 * A * orho * orho
+                  + 4.0 * A * orho * orho * orho
+		  		  + 2.0 * B * orho
+                  - 6.0 * B * phi
+                  + 4.0 * B * eta3;
+
+			
         }
         else if(nanoStep == 1)
         {
