@@ -31,11 +31,11 @@ using namespace LibGeoDecomp;
 class RigidMotions;
 // constants
 
-const int nf = 12;
+const int nf = 6;
 //const int nx = 1152/2;
 //const int ny = 1152/2;
-const int nx = 256;
-const int ny = 256;
+const int nx = 128;
+const int ny = 128;
 const int nz = 1;
 
 int outputFrequency = 1000;

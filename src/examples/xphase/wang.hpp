@@ -194,7 +194,7 @@ public:
                        f[i][j][0] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[0] - nabla_eta(hood,j)[0]); 
                        f[i][j][1] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[1] - nabla_eta(hood,j)[1]); 
                        f[i][j][2] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[2] - nabla_eta(hood,j)[2]); 
-		       		   //cout << "Forces on (" << i <<","<<j<<"):"<<"("<<f[i][j][0] << ","<<f[i][j][1]<<","<<f[i][j][2]<<")"<<endl;
+		       		   cout << "Forces on (" << i <<","<<j<<"):"<<"("<<f[i][j][0] << ","<<f[i][j][1]<<","<<f[i][j][2]<<")"<<endl;
                        f[j][i][0]=-f[i][j][0];
                        f[j][i][1]=-f[i][j][1];
                        f[j][i][2]=-f[i][j][2];
@@ -202,23 +202,51 @@ public:
                }
             }
 
-            memset(sumf, 0, sizeof(sumf[0][0])*nf*3);
+            memset(sumf, 0.0, sizeof(sumf[0][0])*nf*3); // @@ CLEAN not used anymore
+
+            // reset the global velocity field to zero
+            //vel_sumx = 0.0;
+            //vel_sumy = 0.0;
+            //vel_sumz = 0.0;
             // forces on the particle i
             for(int i = 0; i < nf; ++i)
             {
+                double sumfx = 0.0;
+                double sumfy = 0.0;
+                double sumfz = 0.0;
                 for(int j=0; j < nf; ++j)
                 {
                     if(i != j) 
                     {
+                        /*
                         sumf[i][0] += f[i][j][0];
                         sumf[i][1] += f[i][j][1];
-                        sumf[i][2] += f[i][j][2];
+                        sumf[i][2] += f[i][j][2];*/
+                        sumfx += f[i][j][0];
+                        sumfy += f[i][j][1];
+                        sumfz += f[i][j][2];
                     }
                 }
-                //cout << "Sumf "<<i<<" (x,y,z):" << sumf[i][0] << "," << sumf[i][1] << "," << sumf[i][2] << endl; 
-                vel[i][0] = mt * sumf[i][0] / staticData[i] * eta[i];
+                if (sumfx > 0.0 || sumfy > 0.0 || sumfz > 0.0)
+                    cout << "Sumf "<<i<<" (x,y,z):" << sumfx << "," << sumfy << "," << sumfz << endl; 
+                /*vel[i][0] = mt * sumf[i][0] / staticData[i] * eta[i];
                 vel[i][1] = mt * sumf[i][1] / staticData[i] * eta[i];
-                vel[i][2] = mt * sumf[i][2] / staticData[i] * eta[i];
+                vel[i][2] = mt * sumf[i][2] / staticData[i] * eta[i];*/
+                //cout << "Volume of the particle " << i << ":" << staticData[i] << endl; 
+                if (staticData[i] > 0.0) {
+                    vel[i][0] = mt * sumfx / staticData[i] * eta[i];
+                    vel[i][1] = mt * sumfy / staticData[i] * eta[i];
+                    vel[i][2] = mt * sumfz / staticData[i] * eta[i];
+
+                    // here we add all particles velocities to get
+                    // global velocities for rho field.
+                    /*
+                    vel_sumx += vel[i][0];
+                    vel_sumy += vel[i][1];
+                    vel_sumz += vel[i][2];
+                    cout << "vel "<<i<<" (x,y,z):" << vel_sumx << "," << vel_sumy << "," << vel_sumz << endl; 
+                    */
+                }
             }
 
             //phi += orho * orho;
@@ -230,15 +258,19 @@ public:
                 chi[i]  = - k_eta * lap_eta<MAP>(hood, i) 
                     // adding advection term to model rigid motion
                     // of the particles -- ivt 15.05.19
-                          //+(nabla_eta(hood,i)[0] * vel[i][0] + nabla_eta(hood,i)[1] * vel[i][1] 
-                          //        + nabla_eta(hood,i)[2] * vel[i][2] + oe * nabla_vel(hood,i)[0] + oe * nabla_vel(hood,i)[1] + oe * nabla_vel(hood,i)[2])
+                    // 0.5 factor is comming from the central differences used
+                    // for nabla_eta and nabla_vel operators.
+                          +0.5*(nabla_eta(hood,i)[0] * vel[i][0] + nabla_eta(hood,i)[1] * vel[i][1] 
+                                  + nabla_eta(hood,i)[2] * vel[i][2] + oe * nabla_vel(hood,i)[0] + oe * nabla_vel(hood,i)[1] + oe * nabla_vel(hood,i)[2])
                           + 12.0 * B * (1 - orho) * oe
                           - 12.0 * B * (2 - orho) * oe * oe
                           + 12.0 * B * oe * phi;
             } 
             // changes to original Wang paper 
 	        // -4.0 * B * eta3 is +4*B*eta3 and additional +2.0*B*orho term 
+            // @@ NOTE added the new advection term for the velocity--ivt 19.05.19
             psi = - k_rho * lap_rho<MAP>(hood)
+                  //- (orho * vel_sumx + orho * vel_sumy + orho * vel_sumz) 
                   + 2.0 * A * orho 
                   - 6.0 * A * orho * orho
                   + 4.0 * A * orho * orho * orho
@@ -275,7 +307,8 @@ public:
     }
     double f[nf][nf][3]; 
     double sumf[nf][3]; 
-    double vel[nf][3];
+    double vel[nf][3]; 
+    //double vel_sumx, vel_sumy, vel_sumz;
     double rho, psi, phi, eta[nf], chi[nf], vr[nf], vt[nf], eta3;
 };
 
