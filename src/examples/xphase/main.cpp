@@ -31,15 +31,15 @@ using namespace LibGeoDecomp;
 class RigidMotions;
 // constants
 
-const int nf = 6;
-//const int nx = 1152/2;
-//const int ny = 1152/2;
-const int nx = 128;
-const int ny = 128;
+const int nf = 4;
+const int nx = 1152/4;
+const int ny = 1152/4;
+//const int nx = 128;
+//const int ny = 128;
 const int nz = 1;
 
 int outputFrequency = 1000;
-int numSteps = 100000;
+int numSteps = 300000;
 
 const double dt = 0.001;
 // model
@@ -61,7 +61,7 @@ public:
 		using namespace boost;
 		using namespace std;
 		cout << "Reading particles" << endl;
-		string data("26particles.txt");
+		string data("4particles.txt");
 		ifstream in(data.c_str());
 		if (!in) {
 			cerr << "Can't open the input file " << data << endl;
@@ -98,7 +98,7 @@ public:
         CoordBox<3> rect = ret->boundingBox();
 	// read particles from external file
         readparticles(particles);
-        double size_img = 1152/2;	
+        double size_img = 1152/4;	
         for (int z = 0; z < nz; ++z) 
             for (int y = 0; y < ny; ++y) 
                 for (int x = 0; x < nx; ++x) 

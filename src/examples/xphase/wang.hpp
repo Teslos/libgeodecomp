@@ -37,14 +37,16 @@ public:
     inline explicit Cell(vector<double> v)
     {
         rho = 0.0;   // initialize mass density
+        //vel_sumx = vel_sumy = vel_sumz = 0.0; // initialize velocities 
         for(int i = 0; i < nf; ++i)
         {
             eta[i] = v[i];  // vector of crystalline orientations
             //rho += eta[i];
 		    rho = 1.0; // initialize mass density to one ( ivt )
         }
-		// initialize forces to zero
+		// initialize forces and velocities to zero
 		memset(f, 0, sizeof(f[0][0][0]) *nf*nf*3 );
+        memset(vel, 0, sizeof(vel[0][0]) *nf*3);
     }
     
 	template<typename MAP>
@@ -194,7 +196,7 @@ public:
                        f[i][j][0] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[0] - nabla_eta(hood,j)[0]); 
                        f[i][j][1] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[1] - nabla_eta(hood,j)[1]); 
                        f[i][j][2] = kappa * (orho - rho_o) * 0.5*(nabla_eta(hood,i)[2] - nabla_eta(hood,j)[2]); 
-		       		   cout << "Forces on (" << i <<","<<j<<"):"<<"("<<f[i][j][0] << ","<<f[i][j][1]<<","<<f[i][j][2]<<")"<<endl;
+		       		   //cout << "Forces on (" << i <<","<<j<<"):"<<"("<<f[i][j][0] << ","<<f[i][j][1]<<","<<f[i][j][2]<<")"<<endl;
                        f[j][i][0]=-f[i][j][0];
                        f[j][i][1]=-f[i][j][1];
                        f[j][i][2]=-f[i][j][2];
@@ -228,7 +230,7 @@ public:
                     }
                 }
                 if (sumfx > 0.0 || sumfy > 0.0 || sumfz > 0.0)
-                    cout << "Sumf "<<i<<" (x,y,z):" << sumfx << "," << sumfy << "," << sumfz << endl; 
+                    //cout << "Sumf "<<i<<" (x,y,z):" << sumfx << "," << sumfy << "," << sumfz << endl; 
                 /*vel[i][0] = mt * sumf[i][0] / staticData[i] * eta[i];
                 vel[i][1] = mt * sumf[i][1] / staticData[i] * eta[i];
                 vel[i][2] = mt * sumf[i][2] / staticData[i] * eta[i];*/
@@ -269,8 +271,16 @@ public:
             // changes to original Wang paper 
 	        // -4.0 * B * eta3 is +4*B*eta3 and additional +2.0*B*orho term 
             // @@ NOTE added the new advection term for the velocity--ivt 19.05.19
+            double velx = 0.0;
+            double vely = 0.0;
+            double velz = 0.0;
+            for (int i = 0; i < nf; ++i) {
+                velx += vel[i][0];
+                vely += vel[i][1];
+                velz += vel[i][2];
+            }
             psi = - k_rho * lap_rho<MAP>(hood)
-                  //- (orho * vel_sumx + orho * vel_sumy + orho * vel_sumz) 
+                  - (orho * velx + orho * vely + orho * velz) 
                   + 2.0 * A * orho 
                   - 6.0 * A * orho * orho
                   + 4.0 * A * orho * orho * orho
